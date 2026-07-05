@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="78%">
+      <stop offset="0" stop-color="#20272A"/>
+      <stop offset="0.58" stop-color="#11171A"/>
+      <stop offset="1" stop-color="#070B0D"/>
+    </radialGradient>
+    <radialGradient id="sphere" cx="38%" cy="30%" r="68%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.38" stop-color="#D7DCDD"/>
+      <stop offset="1" stop-color="#70787C"/>
+    </radialGradient>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="38" stdDeviation="42" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="56" y="56" width="912" height="912" rx="210" fill="url(#bg)"/>
+    <rect x="86" y="86" width="852" height="852" rx="182" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="10"/>
+  </g>
+
+  <g fill="none" stroke="#DDE3E5" stroke-linecap="round" opacity="0.18" filter="url(#soft)">
+    <ellipse cx="512" cy="512" rx="390" ry="132" transform="rotate(-38 512 512)" stroke-width="18"/>
+    <ellipse cx="512" cy="512" rx="390" ry="132" transform="rotate(33 512 512)" stroke-width="16"/>
+    <ellipse cx="512" cy="512" rx="410" ry="124" transform="rotate(4 512 512)" stroke-width="12"/>
+  </g>
+
+  <g fill="none" stroke="#F4F7F8" stroke-linecap="round" filter="url(#glow)">
+    <ellipse cx="512" cy="512" rx="374" ry="124" transform="rotate(-38 512 512)" stroke-width="14" opacity="0.86"/>
+    <ellipse cx="512" cy="512" rx="366" ry="120" transform="rotate(33 512 512)" stroke-width="12" opacity="0.82"/>
+    <ellipse cx="512" cy="512" rx="412" ry="116" transform="rotate(4 512 512)" stroke-width="7" opacity="0.45"/>
+  </g>
+
+  <g fill="#EEF3F5" opacity="0.7">
+    <circle cx="318" cy="352" r="2.4"/>
+    <circle cx="386" cy="245" r="2"/>
+    <circle cx="435" cy="378" r="2.2"/>
+    <circle cx="463" cy="671" r="2"/>
+    <circle cx="528" cy="428" r="3"/>
+    <circle cx="548" cy="470" r="2.4"/>
+    <circle cx="585" cy="720" r="2.2"/>
+    <circle cx="647" cy="315" r="3"/>
+    <circle cx="721" cy="356" r="2.2"/>
+    <circle cx="751" cy="616" r="2.8"/>
+    <circle cx="382" cy="704" r="3"/>
+    <circle cx="313" cy="641" r="2.4"/>
+  </g>
+
+  <circle cx="532" cy="588" r="86" fill="url(#sphere)" stroke="#F4F8F9" stroke-width="6"/>
+  <circle cx="590" cy="338" r="42" fill="url(#sphere)" stroke="#F4F8F9" stroke-width="5"/>
+  <circle cx="612" cy="790" r="40" fill="url(#sphere)" stroke="#F4F8F9" stroke-width="5"/>
+
+  <path d="M108 198C222 88 775 80 915 184" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.10"/>
+  <path d="M112 820C242 930 792 932 912 822" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.07"/>
+</svg>

@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="zh" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kunkun · skill管理平台</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#cbd0d1; --peach:#ff846a; --cream:#fbfaf7; --glass:rgba(255,255,255,.72);
+    --panel:#ffffff; --panel2:#f7f7f4; --sunk:#eef0ef; --ink:#111419; --soft:#5b626b; --faint:#9aa0a7;
+    --line:#e4e5e2; --lineS:#eeeeeb; --accent:#111820; --accentI:#242c35;
+    --claude:#2da86f; --claudeB:#e7f7ef; --codex:#c98219; --codexB:#fff0cf;
+    --crit:#d44a56; --critB:#ffe6e7; --shadow:0 28px 80px rgba(49,37,31,.18);
+    --mono:ui-monospace,"SF Mono",Menlo,monospace; --sans:-apple-system,"PingFang SC",system-ui,sans-serif;
+  }
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#343743; --peach:#ff765d; --cream:#15171d; --glass:rgba(24,26,32,.74);
+    --panel:#191b21; --panel2:#202229; --sunk:#111318; --ink:#f6f7f4; --soft:#c2c5cc; --faint:#838894;
+    --line:#2a2d34; --lineS:#23262d; --accent:#f6f7f4; --accentI:#ffffff;
+    --claude:#55d894; --claudeB:#143025; --codex:#ffd36a; --codexB:#342712;
+    --crit:#ff7784; --critB:#351d23; --shadow:0 28px 80px rgba(0,0,0,.34);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;
+    background:linear-gradient(180deg,var(--bg) 0%,#d9d6d0 42%,var(--peach) 100%);overflow-x:hidden;}
+  body::before{content:"KUNKUN";position:fixed;right:4vw;bottom:2vh;font-size:clamp(54px,10vw,130px);line-height:1;
+    font-weight:900;letter-spacing:-.08em;color:rgba(255,255,255,.18);pointer-events:none;}
+  body::after{content:"";position:fixed;inset:0;background:
+    radial-gradient(circle at 50% 38%,rgba(255,255,255,.52),transparent 22%),
+    linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,0));pointer-events:none;}
+  button{font-family:var(--sans);cursor:pointer}
+  .page{position:relative;z-index:1;min-height:100vh;padding:0;}
+
+  .app-shell{width:100%;margin:0;min-height:100vh;display:block;
+    background:var(--glass);border:0;border-radius:0;box-shadow:none;
+    overflow:hidden;backdrop-filter:blur(28px);}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:850;letter-spacing:-.04em}
+  .brand-mark{width:28px;height:28px;border-radius:50%;background:#0e1418;position:relative;box-shadow:0 10px 28px rgba(0,0,0,.18)}
+  .brand-mark::before{content:"";position:absolute;inset:7px;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+  .filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 10px}
+  .fbtn{border:0;background:transparent;color:var(--soft);height:34px;border-radius:17px;padding:0 10px;display:flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:680;text-align:left}
+  .fbtn .dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  .fbtn[aria-pressed=true]{background:rgba(255,255,255,.74);color:var(--ink);box-shadow:0 10px 22px rgba(30,32,36,.06)}
+  html[data-theme="dark"] .fbtn[aria-pressed=true]{background:rgba(255,255,255,.08)}
+  .fbtn .cnt{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  .work-panel{padding:20px clamp(16px,2vw,28px) 24px;min-width:0}
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .section-title h2{margin:0;font-size:22px;letter-spacing:-.04em}.section-title p{margin:4px 0 0;color:var(--faint);font-size:12px}
+  .search{margin-left:auto;min-width:260px;max-width:560px;flex:1;display:flex;align-items:center;gap:9px;height:40px;border-radius:20px;
+    background:rgba(255,255,255,.62);border:1px solid var(--line);padding:0 14px}
+  html[data-theme="dark"] .search{background:rgba(255,255,255,.06)}
+  .search input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:13px}
+  .btn{height:42px;border:1px solid var(--line);border-radius:21px;padding:0 16px;background:rgba(255,255,255,.66);color:var(--ink);font-weight:760}
+  html[data-theme="dark"] .btn{background:rgba(255,255,255,.06)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--cream)}
+  .theme-toggle{width:42px;padding:0}.theme-toggle .sun{display:none}html[data-theme="light"] .theme-toggle .sun{display:inline}html[data-theme="light"] .theme-toggle .moon{display:none}
+
+  .summary-strip{margin:0 0 16px}
+  .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+  .stat{background:rgba(255,255,255,.74);border:1px solid var(--lineS);border-radius:14px;padding:9px 12px;text-align:left;min-height:58px}
+  html[data-theme="dark"] .stat{background:rgba(255,255,255,.06)}
+  .stat .n{font-size:21px;font-weight:900;font-family:var(--mono);font-variant-numeric:tabular-nums}.stat .l{font-size:11px;color:var(--faint);margin-top:4px}
+  .stat.c .n{color:var(--claude)}.stat.x .n{color:var(--codex)}.stat.w .n{color:var(--crit)}
+
+  .tools-head{display:flex;align-items:flex-end;justify-content:space-between;margin:8px 0 10px}
+  .tools-head h3{margin:0;font-size:15px;letter-spacing:-.03em}.tools-head span{font-size:12px;color:var(--faint)}
+  .quick-panel{display:grid;grid-template-columns:1.25fr .85fr;gap:10px}
+  .quick-card{min-width:0;background:rgba(255,255,255,.68);border:1px solid var(--lineS);border-radius:16px;padding:12px}
+  html[data-theme="dark"] .quick-card{background:rgba(255,255,255,.055)}
+  .quick-card h3{margin:0 0 9px;font-size:12px;color:var(--soft);letter-spacing:-.02em}.recent-list{display:grid;gap:6px}
+  .history-item{display:grid;grid-template-columns:13px minmax(0,1fr) auto;gap:8px;align-items:start;border-radius:10px;padding:3px 0}
+  .check{width:11px;height:11px;border:1px solid var(--line);border-radius:4px;margin-top:3px}.history-item b{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.history-item p{margin:2px 0 0;color:var(--faint);font-size:10.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.history-item time{font-size:10px;color:var(--faint);white-space:nowrap}
+  .health-card{display:grid;align-content:start;gap:7px;background:#111820;color:#fff}.health-card h3{margin:0 0 3px;font-size:12px}.health-row{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.74)}.health-row b{color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .card{position:relative;display:flex;flex-direction:column;min-height:154px;border:1px solid var(--lineS);border-radius:16px;padding:12px;
+    background:rgba(255,255,255,.74);transition:transform .16s,border-color .16s,box-shadow .16s;cursor:pointer}
+  html[data-theme="dark"] .card{background:rgba(255,255,255,.055)}
+  .card:hover{transform:translateY(-2px);border-color:rgba(17,20,25,.28);box-shadow:0 18px 36px rgba(22,20,18,.08)}
+  .card.dim{opacity:.62;border-style:dashed}.card.hidden{display:none}
+  .card .rail{position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:4px}.card.pri-high .rail{background:#111820}.card.pri-low .rail{background:var(--faint);opacity:.4}
+  .chead{display:flex;justify-content:space-between;gap:10px;padding-left:8px}.cname{font-weight:820;font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
+  .badge{width:20px;height:20px;border-radius:7px;display:grid;place-items:center;font-size:10px;font-weight:900}.badge.c{background:var(--claudeB);color:var(--claude)}.badge.x{background:var(--codexB);color:var(--codex)}
+  .flag,.prpill{font-size:10px;font-weight:760;padding:3px 7px;border-radius:999px;background:var(--sunk);color:var(--faint);white-space:nowrap}
+  .flag.broken{background:var(--critB);color:var(--crit)}.flag.shared{background:var(--sunk);color:var(--faint)}.prpill.high{background:#111820;color:#fff}.prpill.low{opacity:.75}
+  .cdesc{font-size:12px;color:var(--soft);line-height:1.45;margin:10px 0 7px 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:35px}
+  .csrc{font-size:10.5px;color:var(--faint);margin:0 0 8px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmeta{display:flex;align-items:center;gap:8px;padding-left:8px;margin-top:auto}.calls{font-family:var(--mono);font-weight:900;color:var(--accentI)}.calls.zero{color:var(--faint)}.last{font-size:11px;color:var(--faint)}.conf{margin-left:auto;font-size:10px;padding:3px 7px;border-radius:999px}.conf.exact{background:var(--claudeB);color:var(--claude)}.conf.inferred{background:var(--codexB);color:var(--codex)}.conf.none{background:var(--sunk);color:var(--faint)}
+  .cbar{height:4px;border-radius:4px;background:var(--sunk);overflow:hidden;margin:10px 0 0 8px}.cbar>i{display:block;height:100%;background:linear-gradient(90deg,#2da86f,#7688ff)}
+  .cactions{display:flex;gap:6px;border-top:1px solid var(--lineS);padding:8px 0 0 8px;margin-top:8px}.cactions button{height:28px;border-radius:14px;border:1px solid var(--lineS);background:rgba(255,255,255,.5);color:var(--soft);font-weight:760}.cactions .detail,.cactions .prio{padding:0 9px}.cactions .del{margin-left:auto;padding:0 10px}.cactions .del:hover{background:var(--critB);color:var(--crit)}
+
+  .loading,.empty{text-align:center;padding:42px;color:var(--faint);grid-column:1/-1}
+  .modal-bg{position:fixed;inset:0;background:rgba(17,20,25,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(10px)}
+  .modal-bg.show{display:flex}.modal{background:var(--panel);border:1px solid var(--line);border-radius:24px;max-width:440px;width:100%;padding:24px;box-shadow:var(--shadow)}.modal.detail-modal{max-width:680px}.modal h3{margin:0 0 6px;font-size:18px}.modal .sub{font-size:12px;color:var(--faint);margin:0 0 14px}.modal .path{font-family:var(--mono);font-size:11.5px;color:var(--faint);word-break:break-all;background:var(--sunk);padding:9px 11px;border-radius:12px;margin:10px 0}.detail-list{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px 12px;margin-top:12px}.detail-list dt{font-size:12px;color:var(--faint);text-align:right}.detail-list dd{margin:0;font-size:13px;color:var(--soft);line-height:1.45;word-break:break-word}.detail-list dd.mono{font-family:var(--mono);font-size:11.5px}.detail-list a{color:var(--accentI);text-decoration:none}.warn{font-size:13px;color:var(--soft);background:var(--codexB);border-radius:14px;padding:11px 13px;margin:10px 0;border-left:3px solid var(--codex)}.warn.shared{background:var(--critB);border-left-color:var(--crit)}.verb{display:inline-block;font-size:11px;font-weight:780;padding:3px 9px;border-radius:999px;background:var(--accent);color:var(--cream);margin-bottom:8px}.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}.result{font-size:13px;padding:10px 12px;border-radius:12px;margin-top:10px}.result.ok{background:var(--claudeB);color:var(--claude)}.result.fail{background:var(--critB);color:var(--crit)}.hidden{display:none!important}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (max-width:920px){.stats{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:760px){.work-panel{padding:14px}.topbar{flex-wrap:wrap}.search{min-width:100%;order:3}.stats{grid-template-columns:repeat(2,1fr)}.quick-panel{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="app-shell">
+    <main class="work-panel">
+      <div class="topbar">
+        <div class="brand"><span class="brand-mark"></span><span>kunkun</span></div>
+        <div class="section-title"><h2>技能工作台</h2><p id="scanMeta"></p></div>
+        <div class="search"><span>⌕</span><input id="q" type="text" placeholder="搜索技能名或功能..."></div>
+        <button class="btn theme-toggle" id="themeToggle" type="button" aria-label="切换浅色/深色界面" title="切换浅色/深色界面"><span class="moon">☾</span><span class="sun">☀</span></button>
+        <button class="btn primary" id="refreshBtn" type="button">刷新</button>
+      </div>
+
+      <nav class="filterbar" id="filters" aria-label="技能筛选">
+        <button class="fbtn" data-f="all" aria-pressed="true"><span class="dot"></span>全部技能 <span class="cnt" id="c-all"></span></button>
+        <button class="fbtn" data-f="claude" aria-pressed="false"><span class="dot"></span>Claude <span class="cnt" id="c-claude"></span></button>
+        <button class="fbtn" data-f="codex" aria-pressed="false"><span class="dot"></span>Codex <span class="cnt" id="c-codex"></span></button>
+        <button class="fbtn" data-f="high" aria-pressed="false"><span class="dot"></span>高优先级 <span class="cnt" id="c-high"></span></button>
+        <button class="fbtn" data-f="unused" aria-pressed="false"><span class="dot"></span>未使用 <span class="cnt" id="c-unused"></span></button>
+        <button class="fbtn" data-f="broken" aria-pressed="false"><span class="dot"></span>异常技能 <span class="cnt" id="c-broken"></span></button>
+      </nav>
+
+      <section class="summary-strip" aria-label="技能统计">
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <div class="tools-head"><h3>技能列表</h3><span>点击卡片查看功能与下载来源</span></div>
+      <div class="grid" id="grid"><div class="loading">正在扫描本机技能...</div></div>
+    </main>
+  </section>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" role="dialog" aria-modal="true">
+    <span class="verb" id="mVerb"></span>
+    <h3 id="mTitle">删除技能</h3>
+    <div class="path" id="mPath"></div>
+    <div class="warn" id="mWarn"></div>
+    <div class="result hidden" id="mResult"></div>
+    <div class="modal-actions">
+      <button class="btn" id="mCancel">取消</button>
+      <button class="btn" id="mConfirm" style="background:var(--crit);border-color:var(--crit);color:#fff">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="detailBg">
+  <div class="modal detail-modal" role="dialog" aria-modal="true">
+    <span class="verb" id="dSource"></span>
+    <h3 id="dTitle">技能详情</h3>
+    <p class="sub" id="dSub"></p>
+    <dl class="detail-list" id="dList"></dl>
+    <div class="modal-actions"><button class="btn primary" id="dClose">关闭</button></div>
+  </div>
+</div>
+
+<script>
+const invoke = window.__TAURI__?.core?.invoke;
+let CARDS = [];
+let activeF = "all";
+
+function applyTheme(theme){
+  const next = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = next;
+  const btn = document.getElementById("themeToggle");
+  if(btn){
+    btn.setAttribute("aria-pressed", String(next === "dark"));
+    btn.title = next === "dark" ? "当前为深色界面，点击切换浅色" : "当前为浅色界面，点击切换深色";
+  }
+}
+function initTheme(){
+  const saved = localStorage.getItem("skillhub-theme");
+  const preferred = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
+  applyTheme(saved || preferred);
+}
+function toggleTheme(){
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  localStorage.setItem("skillhub-theme", next);
+  applyTheme(next);
+}
+if("scrollRestoration" in history) history.scrollRestoration = "manual";
+function esc(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+function maxCalls(){ return Math.max(1, ...CARDS.map(c=>c.call_count)); }
+function cnSummary(s){
+  if(s.summary_cn) return s.summary_cn;
+  const suited = s.suited_software || (s.engine==="codex" ? "Codex" : "Claude Code");
+  return `功能：提供 ${s.slug} 相关自动化能力；适配：${suited}`;
+}
+function sourceKind(s){
+  if(s.source_kind_cn) return s.source_kind_cn;
+  if((s.source||"").startsWith("plugin:")) return "插件缓存";
+  if(s.source==="agents_shared") return "共享技能库";
+  return "本机用户技能";
+}
+function scopeLevel(s){
+  if(s.scope_level_cn) return s.scope_level_cn;
+  if((s.source||"").startsWith("plugin:")) return "插件级";
+  if((s.resolved_path||"").includes("/.codex/skills/") || (s.resolved_path||"").includes("/.claude/skills/") || (s.resolved_path||"").includes("/.agents/skills/")) return "项目级";
+  return "全局";
+}
+function cardHTML(c, idx){
+  const s = c.skill || c;
+  const isBroken = s.health !== "ok";
+  const isClaude = s.engine === "claude";
+  const cc = c.call_count;
+  const callClass = cc===0 ? "zero" : (cc>=10 ? "hot" : "");
+  const pct = Math.round(cc / maxCalls() * 100);
+  let flag = "";
+  if(s.node_type === "symlink_broken" || s.health==="broken_symlink") flag = `<span class="flag broken">断链</span>`;
+  else if(s.health==="no_frontmatter") flag = `<span class="flag broken">无头</span>`;
+  else if(s.node_type === "symlink_shared") flag = `<span class="flag shared">共享</span>`;
+  else if(s.node_type === "symlink_external") flag = `<span class="flag shared">外链</span>`;
+  const desc = esc(cnSummary(s));
+  const src = esc(sourceKind(s));
+  const scope = esc(scopeLevel(s));
+  const suited = esc(s.suited_software || (isClaude ? "Claude Code" : "Codex"));
+  const conf = c.confidence || "none";
+  const confTxt = conf==="exact"?"精确":(conf==="inferred"?"推断":"无记录");
+  const last = c.last_used ? ` · ${c.last_used.slice(5)}` : "";
+  const prio = c.priority || "normal";
+  const prioLabel = prio==="high"?"高":prio==="low"?"低":"普通";
+  const railCls = prio==="high"?"pri-high":prio==="low"?"pri-low":"";
+  return `<article class="card ${railCls} ${cc===0?'dim':''}" data-idx="${idx}" data-eng="${s.engine}" data-broken="${isBroken}"
+      data-calls="${cc}" data-prio="${prio}" data-name="${esc(s.slug).toLowerCase()}" data-desc="${desc.toLowerCase()} ${src.toLowerCase()} ${suited.toLowerCase()}">
+    <span class="rail"></span>
+    <div class="chead">
+      <span class="cname"><span class="badge ${isClaude?'c':'x'}">${isClaude?'C':'X'}</span>${esc(s.slug)}${flag}</span>
+      <span class="prpill ${prio}">${prioLabel}</span>
+    </div>
+    <p class="cdesc">${desc}</p>
+    <div class="csrc">适配：${suited} · 级别：${scope} · 来源：${src}</div>
+    <div class="cmeta"><span class="calls ${callClass}">${cc}</span><span class="last">次${last}</span><span class="conf ${conf}">${confTxt}</span></div>
+    <div class="cbar"><i style="width:${pct}%"></i></div>
+    <div class="cactions">
+      <button class="detail" data-idx="${idx}">详情</button>
+      <button class="prio" data-eng="${s.engine}" data-slug="${esc(s.slug)}" data-cur="${prio}">优先级</button>
+      <button class="del" data-path="${esc(s.install_path)}" data-slug="${esc(s.slug)}">删除</button>
+    </div>
+  </article>`;
+}
+function render(){
+  const grid = document.getElementById("grid");
+  if(!CARDS.length){ grid.innerHTML = `<div class="empty">没有技能</div>`; return; }
+  grid.innerHTML = CARDS.map(cardHTML).join("");
+  recountPriority();
+  renderHistory();
+  apply();
+}
+function renderStats(counts, meta){
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="n">${counts.total}</div><div class="l">技能总数</div></div>
+    <div class="stat c"><div class="n">${counts.claude}</div><div class="l">Claude Code</div></div>
+    <div class="stat x"><div class="n">${counts.codex}</div><div class="l">Codex</div></div>
+    <div class="stat"><div class="n">${counts.used}</div><div class="l">用过</div></div>
+    <div class="stat"><div class="n">${counts.unused}</div><div class="l">未使用</div></div>
+    <div class="stat w"><div class="n">${counts.broken}</div><div class="l">异常</div></div>`;
+  document.getElementById("c-all").textContent = counts.total;
+  document.getElementById("c-claude").textContent = counts.claude;
+  document.getElementById("c-codex").textContent = counts.codex;
+  document.getElementById("c-unused").textContent = counts.unused;
+  document.getElementById("c-broken").textContent = counts.broken;
+  const hUsed = document.getElementById("h-used");
+  const hUnused = document.getElementById("h-unused");
+  const hBroken = document.getElementById("h-broken");
+  if(hUsed) hUsed.textContent = counts.used;
+  if(hUnused) hUnused.textContent = counts.unused;
+  if(hBroken) hBroken.textContent = counts.broken;
+  document.getElementById("scanMeta").textContent = `${counts.total} 技能 · ${meta.scan_duration_ms}ms`;
+}
+function renderHistory(){
+  const list = document.getElementById("historyList");
+  if(!list) return;
+  const items = CARDS.filter(c=>c.call_count>0).slice(0,5);
+  list.innerHTML = items.map(c=>{
+    const s = c.skill || c;
+    const sub = cnSummary(s).replace(/^功能：/,"").split("；")[0];
+    return `<div class="history-item" data-idx="${CARDS.indexOf(c)}"><span class="check"></span><div><b>${esc(s.slug)}</b><p>${esc(sub)}</p></div><time>${c.call_count} 次</time></div>`;
+  }).join("") || `<div class="empty">暂无调用记录</div>`;
+}
+function apply(){
+  const term = document.getElementById("q").value.trim().toLowerCase();
+  document.querySelectorAll(".card").forEach(card=>{
+    const eng=card.dataset.eng, broken=card.dataset.broken==="true", cc=+card.dataset.calls;
+    const name=card.dataset.name, desc=card.dataset.desc, prio=card.dataset.prio;
+    const okF = activeF==="all" || (activeF==="claude"&&eng==="claude") || (activeF==="codex"&&eng==="codex")
+      || (activeF==="unused"&&cc===0) || (activeF==="broken"&&broken) || (activeF==="high"&&prio==="high");
+    const okQ = !term || name.includes(term) || desc.includes(term);
+    card.classList.toggle("hidden", !(okF&&okQ));
+  });
+}
+function linkOrNone(v, fallback){
+  if(!v) return fallback || "未声明";
+  const safe = esc(v);
+  if(/^https?:\/\//.test(v)) return `<a href="${safe}" target="_blank" rel="noreferrer">${safe}</a>`;
+  return safe;
+}
+function fmtDate(v, fallback="未记录"){
+  if(v === null || v === undefined || v === "") return fallback;
+  if(typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)) return esc(v.slice(0,10));
+  const n = Number(v);
+  if(!Number.isFinite(n) || n <= 0) return fallback;
+  const d = new Date(n);
+  if(Number.isNaN(d.getTime())) return fallback;
+  return d.toLocaleString("zh-CN", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+}
+function detailRows(s, c){
+  return [
+    ["具体功能", esc(s.function_cn || cnSummary(s).replace(/^功能：/, "").split("；")[0])],
+    ["适配软件", esc(s.suited_software || (s.engine==="codex" ? "Codex" : "Claude Code"))],
+    ["级别", esc(scopeLevel(s))],
+    ["下载来源", esc(sourceKind(s))],
+    ["下载时间", fmtDate(s.installed_at_ms, "本机未记录")],
+    ["首次使用", fmtDate(c.first_used, "未使用过")],
+    ["最近使用", fmtDate(c.last_used, "未使用过")],
+    ["更新时间", fmtDate(s.updated_at_ms, "本机未记录")],
+    ["下载链接", linkOrNone(s.source_url || "", "未声明，见安装位置")],
+    ["原始链接", linkOrNone(s.source_url || "", "未声明，见安装位置")],
+    ["更新链接", linkOrNone(s.update_url || "", "未声明，需从来源处检查")],
+    ["安装位置", esc(s.install_path || "未声明"), "mono"],
+    ["真实位置", esc(s.resolved_path || "未声明"), "mono"],
+    ["软链目标", esc(s.link_target || "无"), "mono"],
+    ["调用统计", `${c.call_count || 0} 次 · ${c.confidence==="exact"?"精确":c.confidence==="inferred"?"推断":"无记录"}`],
+    ["健康状态", esc(s.health_detail || (s.health==="ok" ? "正常" : s.health || "未知"))]
+  ];
+}
+function openDetailModal(idx){
+  const c = CARDS[idx]; if(!c) return;
+  const s = c.skill || c;
+  document.getElementById("dSource").textContent = sourceKind(s);
+  document.getElementById("dTitle").textContent = s.slug;
+  document.getElementById("dSub").textContent = cnSummary(s);
+  document.getElementById("dList").innerHTML = detailRows(s, c).map(([k,v,cls])=>`<dt>${k}</dt><dd class="${cls||""}">${v}</dd>`).join("");
+  document.getElementById("detailBg").classList.add("show");
+}
+function closeDetailModal(){ document.getElementById("detailBg").classList.remove("show"); }
+async function refresh(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = `<div class="loading">正在扫描本机技能...</div>`;
+  if(!invoke){ grid.innerHTML = `<div class="empty">未在 Tauri 环境中运行</div>`; return; }
+  try{
+    const res = await invoke("scan_catalog");
+    CARDS = res.skills.sort((a,b)=> b.call_count - a.call_count);
+    renderStats(res.counts, res);
+    render();
+  }catch(e){ grid.innerHTML = `<div class="empty">扫描失败:${esc(String(e))}</div>`; }
+}
+let pendingPath = null;
+const modalBg = document.getElementById("modalBg");
+async function openDeleteModal(path, slug){
+  pendingPath = path;
+  document.getElementById("mResult").classList.add("hidden");
+  document.getElementById("mConfirm").disabled = false;
+  document.getElementById("mTitle").textContent = `删除「${slug}」?`;
+  document.getElementById("mPath").textContent = path;
+  document.getElementById("mVerb").textContent = "...";
+  document.getElementById("mWarn").textContent = "正在预检...";
+  modalBg.classList.add("show");
+  try{
+    const pv = await invoke("preview_delete", { path });
+    document.getElementById("mVerb").textContent = pv.verb === "delete-link" ? "断开链接" : pv.verb === "delete-source" ? "删除目录" : "已拒绝";
+    const warn = document.getElementById("mWarn");
+    warn.textContent = pv.warning || "";
+    warn.classList.toggle("shared", !!pv.is_shared);
+    document.getElementById("mConfirm").disabled = !pv.allowed;
+    document.getElementById("mConfirm").textContent = pv.allowed ? "确认删除" : "无法删除";
+  }catch(e){
+    document.getElementById("mWarn").textContent = "预检失败:" + String(e);
+    document.getElementById("mConfirm").disabled = true;
+  }
+}
+function closeModal(){ modalBg.classList.remove("show"); pendingPath = null; }
+document.getElementById("mCancel").addEventListener("click", closeModal);
+modalBg.addEventListener("click", e=>{ if(e.target===modalBg) closeModal(); });
+document.getElementById("dClose").addEventListener("click", closeDetailModal);
+document.getElementById("detailBg").addEventListener("click", e=>{ if(e.target===document.getElementById("detailBg")) closeDetailModal(); });
+document.getElementById("mConfirm").addEventListener("click", async ()=>{
+  if(!pendingPath) return;
+  const btn = document.getElementById("mConfirm");
+  btn.disabled = true; btn.textContent = "删除中...";
+  try{
+    const res = await invoke("confirm_delete", { path: pendingPath, confirmed: true });
+    const r = document.getElementById("mResult");
+    r.classList.remove("hidden","ok","fail"); r.classList.add(res.ok ? "ok" : "fail");
+    r.textContent = (res.ok ? "已完成 " : "失败 ") + res.message;
+    if(res.ok){ setTimeout(()=>{ closeModal(); refresh(); }, 1200); }
+    else{ btn.textContent = "关闭"; btn.disabled = false; btn.onclick = closeModal; }
+  }catch(e){
+    const r = document.getElementById("mResult");
+    r.classList.remove("hidden","ok"); r.classList.add("fail");
+    r.textContent = "失败 " + String(e);
+    btn.textContent = "关闭"; btn.disabled = false;
+  }
+});
+const PRIO_CYCLE = { normal:"high", high:"low", low:"normal" };
+async function cyclePriority(btn){
+  const eng = btn.dataset.eng, slug = btn.dataset.slug, cur = btn.dataset.cur;
+  const next = PRIO_CYCLE[cur] || "high";
+  try{
+    const res = await invoke("set_priority", { engine: eng, slug, priority: next });
+    if(res.ok){ const card = btn.closest(".card"); card.dataset.prio = next; btn.dataset.cur = next; render(); }
+  }catch(e){ console.error("设优先级失败", e); }
+}
+function recountPriority(){
+  const high = document.querySelectorAll('.card[data-prio="high"]').length;
+  const el = document.getElementById("c-high");
+  if(el) el.textContent = high;
+}
+document.getElementById("grid").addEventListener("click", e=>{
+  const del = e.target.closest(".del"); if(del){ openDeleteModal(del.dataset.path, del.dataset.slug); return; }
+  const detail = e.target.closest(".detail"); if(detail){ openDetailModal(Number(detail.dataset.idx)); return; }
+  const prio = e.target.closest(".prio"); if(prio){ cyclePriority(prio); return; }
+  const card = e.target.closest(".card"); if(card){ openDetailModal(Number(card.dataset.idx)); }
+});
+const historyList = document.getElementById("historyList");
+if(historyList){
+  historyList.addEventListener("click", e=>{
+    const item = e.target.closest(".history-item"); if(item) openDetailModal(Number(item.dataset.idx));
+  });
+}
+document.getElementById("filters").addEventListener("click", e=>{
+  const b=e.target.closest(".fbtn[data-f]"); if(!b) return;
+  document.querySelectorAll("#filters .fbtn").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true"); activeF=b.dataset.f; apply();
+});
+document.getElementById("q").addEventListener("input", apply);
+document.getElementById("refreshBtn").addEventListener("click", refresh);
+document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+window.addEventListener("DOMContentLoaded", ()=>{ initTheme(); refresh(); });
+window.addEventListener("load", ()=>window.scrollTo(0,0));
+</script>
+</body>
+</html>

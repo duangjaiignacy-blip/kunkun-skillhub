@@ -1,0 +1,24 @@
+# Rust / Tauri build output
+target/
+**/target/
+
+# macOS
+.DS_Store
+
+# Local app bundles and generated packages
+*.app/
+*.dmg
+*.zip
+
+# Local screenshots not intended for docs
+screenshots/
+!docs/assets/
+
+# Local editor/tool state
+.claude/
+.playwright-cli/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
