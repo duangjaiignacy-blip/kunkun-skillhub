@@ -61,10 +61,13 @@
 
   .summary-strip{margin:0 0 16px}
   .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-  .stat{background:rgba(255,255,255,.74);border:1px solid var(--lineS);border-radius:14px;padding:9px 12px;text-align:left;min-height:58px}
-  html[data-theme="dark"] .stat{background:rgba(255,255,255,.06)}
-  .stat .n{font-size:21px;font-weight:900;font-family:var(--mono);font-variant-numeric:tabular-nums}.stat .l{font-size:11px;color:var(--faint);margin-top:4px}
-  .stat.c .n{color:var(--claude)}.stat.x .n{color:var(--codex)}.stat.w .n{color:var(--crit)}
+  .stat-btn{background:rgba(255,255,255,.74);border:1px solid var(--lineS);border-radius:14px;padding:9px 12px;text-align:left;min-height:58px;color:var(--ink);
+    transition:transform .16s,border-color .16s,box-shadow .16s}
+  html[data-theme="dark"] .stat-btn{background:rgba(255,255,255,.06)}
+  .stat-btn:hover{transform:translateY(-1px);border-color:rgba(17,20,25,.24);box-shadow:0 12px 28px rgba(22,20,18,.08)}
+  .stat-btn[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 -3px 0 var(--accent),0 12px 28px rgba(22,20,18,.08)}
+  .stat-btn .n{font-size:21px;font-weight:900;font-family:var(--mono);font-variant-numeric:tabular-nums}.stat-btn .l{font-size:11px;color:var(--faint);margin-top:4px}
+  .stat-btn.c .n{color:var(--claude)}.stat-btn.x .n{color:var(--codex)}.stat-btn.w .n{color:var(--crit)}
 
   .tools-head{display:flex;align-items:flex-end;justify-content:space-between;margin:8px 0 10px}
   .tools-head h3{margin:0;font-size:15px;letter-spacing:-.03em}.tools-head span{font-size:12px;color:var(--faint)}
@@ -124,7 +127,7 @@
         <div class="stats" id="stats"></div>
       </section>
 
-      <div class="tools-head"><h3>技能列表</h3><span>点击卡片查看功能与下载来源</span></div>
+      <div class="tools-head" id="toolsHead"><h3>技能列表</h3><span>点击卡片查看功能与下载来源</span></div>
       <div class="grid" id="grid"><div class="loading">正在扫描本机技能...</div></div>
     </main>
   </section>
@@ -248,12 +251,12 @@ function render(){
 }
 function renderStats(counts, meta){
   document.getElementById("stats").innerHTML = `
-    <div class="stat"><div class="n">${counts.total}</div><div class="l">技能总数</div></div>
-    <div class="stat c"><div class="n">${counts.claude}</div><div class="l">Claude Code</div></div>
-    <div class="stat x"><div class="n">${counts.codex}</div><div class="l">Codex</div></div>
-    <div class="stat"><div class="n">${counts.used}</div><div class="l">用过</div></div>
-    <div class="stat"><div class="n">${counts.unused}</div><div class="l">未使用</div></div>
-    <div class="stat w"><div class="n">${counts.broken}</div><div class="l">异常</div></div>`;
+    <button type="button" class="stat-btn" data-f="all" aria-pressed="${activeF==="all"}" aria-label="跳转到全部技能"><div class="n">${counts.total}</div><div class="l">技能总数</div></button>
+    <button type="button" class="stat-btn c" data-f="claude" aria-pressed="${activeF==="claude"}" aria-label="跳转到 Claude Code 技能"><div class="n">${counts.claude}</div><div class="l">Claude Code</div></button>
+    <button type="button" class="stat-btn x" data-f="codex" aria-pressed="${activeF==="codex"}" aria-label="跳转到 Codex 技能"><div class="n">${counts.codex}</div><div class="l">Codex</div></button>
+    <button type="button" class="stat-btn" data-f="used" aria-pressed="${activeF==="used"}" aria-label="跳转到用过的技能"><div class="n">${counts.used}</div><div class="l">用过</div></button>
+    <button type="button" class="stat-btn" data-f="unused" aria-pressed="${activeF==="unused"}" aria-label="跳转到未使用技能"><div class="n">${counts.unused}</div><div class="l">未使用</div></button>
+    <button type="button" class="stat-btn w" data-f="broken" aria-pressed="${activeF==="broken"}" aria-label="跳转到异常技能"><div class="n">${counts.broken}</div><div class="l">异常</div></button>`;
   document.getElementById("c-all").textContent = counts.total;
   document.getElementById("c-claude").textContent = counts.claude;
   document.getElementById("c-codex").textContent = counts.codex;
@@ -266,6 +269,7 @@ function renderStats(counts, meta){
   if(hUnused) hUnused.textContent = counts.unused;
   if(hBroken) hBroken.textContent = counts.broken;
   document.getElementById("scanMeta").textContent = `${counts.total} 技能 · ${meta.scan_duration_ms}ms`;
+  syncFilterButtons();
 }
 function renderHistory(){
   const list = document.getElementById("historyList");
@@ -283,10 +287,23 @@ function apply(){
     const eng=card.dataset.eng, broken=card.dataset.broken==="true", cc=+card.dataset.calls;
     const name=card.dataset.name, desc=card.dataset.desc, prio=card.dataset.prio;
     const okF = activeF==="all" || (activeF==="claude"&&eng==="claude") || (activeF==="codex"&&eng==="codex")
-      || (activeF==="unused"&&cc===0) || (activeF==="broken"&&broken) || (activeF==="high"&&prio==="high");
+      || (activeF==="used"&&cc>0) || (activeF==="unused"&&cc===0) || (activeF==="broken"&&broken) || (activeF==="high"&&prio==="high");
     const okQ = !term || name.includes(term) || desc.includes(term);
     card.classList.toggle("hidden", !(okF&&okQ));
   });
+}
+function syncFilterButtons(){
+  document.querySelectorAll("#filters .fbtn").forEach(btn=>{
+    btn.setAttribute("aria-pressed", String(btn.dataset.f === activeF));
+  });
+  document.querySelectorAll("#stats .stat-btn").forEach(btn=>{
+    btn.setAttribute("aria-pressed", String(btn.dataset.f === activeF));
+  });
+}
+function selectFilter(f){
+  activeF = f || "all";
+  syncFilterButtons();
+  apply();
 }
 function linkOrNone(v, fallback){
   if(!v) return fallback || "未声明";
@@ -419,8 +436,12 @@ if(historyList){
 }
 document.getElementById("filters").addEventListener("click", e=>{
   const b=e.target.closest(".fbtn[data-f]"); if(!b) return;
-  document.querySelectorAll("#filters .fbtn").forEach(x=>x.setAttribute("aria-pressed","false"));
-  b.setAttribute("aria-pressed","true"); activeF=b.dataset.f; apply();
+  selectFilter(b.dataset.f);
+});
+document.getElementById("stats").addEventListener("click", e=>{
+  const b=e.target.closest(".stat-btn[data-f]"); if(!b) return;
+  const f = b.dataset.f;
+  selectFilter(f);
 });
 document.getElementById("q").addEventListener("input", apply);
 document.getElementById("refreshBtn").addEventListener("click", refresh);
